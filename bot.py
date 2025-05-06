@@ -2,6 +2,7 @@
 import os
 
 import discord
+import asyncio
 from discord.ext import commands
 import yt_dlp
 from dotenv import load_dotenv
@@ -81,6 +82,15 @@ async def play_next_song(ctx):
     voice.play(discord.FFmpegPCMAudio(filename), after=lambda e: asyncio.run_coroutine_threadsafe(play_next_song(ctx), bot.loop))
 
     await ctx.send(f"▶️ Reproduciendo ahora: {info['title']}")
+
+@bot.command()
+async def queue(ctx):
+    if not song_queue:
+        await ctx.send("📭 La cola está vacía.")
+        return
+    message = "\n".join([f"{i+1}. {url}" for i, url in enumerate(song_queue)])
+    await ctx.send(f"🎶 Cola de reproducción:\n{message}")
+
 
 @bot.command(name='leave')
 async def leave(ctx):
