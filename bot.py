@@ -38,22 +38,33 @@ async def join(ctx):
     else:
         await ctx.send('¡Tenés que estar en un canal de voz!')
 
+song_queue = []
+MAX_QUEUE_SIZE = 10
 @bot.command(name='play')
 async def play(ctx, url):
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    
+    if len(song_queue) >= MAX_QUEUE_SIZE:
+        await ctx.send("❌ La cola está llena (máximo 10 canciones).")
+        return
 
-    if not voice or not voice.is_connected():
-        if ctx.author.voice:
-            channel = ctx.author.voice.channel
-            voice = await channel.connect()
-        else:
-            await ctx.send('Tenés que estar en un canal de voz.')
-            return
+    song_queue.append(url)
 
+    if not voice or not voice.is_playing():
+        await play_next_song(ctx)
+    else:
+        await ctx.send(f"🎵 Se agregó a la cola: {url}")
+
+async def play_next_song(ctx):
+    if len(song_queue) == 0:
+        await ctx.send("✅ La cola ha terminado.")
+        return
+
+    url = song_queue.pop(0)
+
+    # Descargar y reproducir (usa tu código de yt_dlp aquí)
     ydl_opts = {
         'format': 'bestaudio/best',
-        'quiet': True,
-        'no_warnings': True,
         'outtmpl': 'song.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -64,10 +75,12 @@ async def play(ctx, url):
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
-        source = discord.FFmpegPCMAudio("song.mp3")
-        voice.play(source)
+        filename = ydl.prepare_filename(info).replace('.webm', '.mp3').replace('.m4a', '.mp3')
 
-    await ctx.send(f'Reproduciendo: {info["title"]}')
+    voice = await ctx.author.voice.channel.connect() if not discord.utils.get(bot.voice_clients, guild=ctx.guild) else discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    voice.play(discord.FFmpegPCMAudio(filename), after=lambda e: asyncio.run_coroutine_threadsafe(play_next_song(ctx), bot.loop))
+
+    await ctx.send(f"▶️ Reproduciendo ahora: {info['title']}")
 
 @bot.command(name='leave')
 async def leave(ctx):
