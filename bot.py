@@ -71,16 +71,25 @@ async def play_next_song(ctx):
     url = song_queue.pop(0)
 
     ydl_opts = {
-    'format': 'bestaudio',
-    'quiet': True,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0'  # evita problemas de IP
-}
+        'format': 'bestaudio',
+        'quiet': True,
+        'no_warnings': True,
+        'default_search': 'auto',
+        'source_address': '0.0.0.0'
+    }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
-        audio_url = info['url']
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            audio_url = info['url']
+    except Exception as e:
+        await ctx.send(f"❌ Error al reproducir {url}: {e}")
+        await play_next_song(ctx)
+        return
+
+    voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    if not voice:
+        voice = await ctx.author.voice.channel.connect()
 
     ffmpeg_options = {
         'options': '-vn'
@@ -92,6 +101,7 @@ async def play_next_song(ctx):
     )
 
     await ctx.send(f"▶️ Reproduciendo ahora: {info['title']}")
+
 
 @bot.command()
 async def queue(ctx):
