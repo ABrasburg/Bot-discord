@@ -71,25 +71,25 @@ async def play_next_song(ctx):
     url = song_queue.pop(0)
 
     ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': 'song.%(ext)s',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
+    'format': 'bestaudio',
+    'quiet': True,
+    'no_warnings': True,
+    'default_search': 'auto',
+    'source_address': '0.0.0.0'  # evita problemas de IP
+}
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        audio_url = info['url']
+
+    ffmpeg_options = {
+        'options': '-vn'
     }
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info).replace('.webm', '.mp3').replace('.m4a', '.mp3')
-    except Exception as e:
-        await ctx.send(f"❌ Error al descargar el audio: {e}")
-        return
-
-    voice = await ctx.author.voice.channel.connect() if not discord.utils.get(bot.voice_clients, guild=ctx.guild) else discord.utils.get(bot.voice_clients, guild=ctx.guild)
-    voice.play(discord.FFmpegPCMAudio(filename), after=lambda e: asyncio.run_coroutine_threadsafe(play_next_song(ctx), bot.loop))
+    voice.play(
+        discord.FFmpegPCMAudio(audio_url, **ffmpeg_options),
+        after=lambda e: asyncio.run_coroutine_threadsafe(play_next_song(ctx), bot.loop)
+    )
 
     await ctx.send(f"▶️ Reproduciendo ahora: {info['title']}")
 

@@ -9,6 +9,7 @@ wavelink = "*"
 python-dotenv = "*"
 yt-dlp = "*"
 pynacl = "*"
+ffmpeg-python = "*"
 
 [dev-packages]
 
