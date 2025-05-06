@@ -50,6 +50,7 @@ MAX_QUEUE_SIZE = 10
 
 @bot.command(name='play')
 async def play(ctx, url):
+    print(f"Comando !play recibido con URL: {url}")  # Agregar log aquí
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     
     if len(song_queue) >= MAX_QUEUE_SIZE:
