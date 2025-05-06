@@ -80,9 +80,13 @@ async def play_next_song(ctx):
         }],
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info).replace('.webm', '.mp3').replace('.m4a', '.mp3')
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info).replace('.webm', '.mp3').replace('.m4a', '.mp3')
+    except Exception as e:
+        await ctx.send(f"❌ Error al descargar el audio: {e}")
+        return
 
     voice = await ctx.author.voice.channel.connect() if not discord.utils.get(bot.voice_clients, guild=ctx.guild) else discord.utils.get(bot.voice_clients, guild=ctx.guild)
     voice.play(discord.FFmpegPCMAudio(filename), after=lambda e: asyncio.run_coroutine_threadsafe(play_next_song(ctx), bot.loop))
