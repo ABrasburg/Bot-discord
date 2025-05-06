@@ -81,7 +81,6 @@ async def play_next_song(ctx):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         audio_url = info['url']
-        await ctx.send(f"▶️ Reproduciendo ahora: {info['title']}")
 
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if not voice:
