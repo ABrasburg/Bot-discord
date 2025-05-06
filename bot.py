@@ -102,3 +102,31 @@ async def leave(ctx):
         await ctx.send('No estoy en ningún canal de voz.')
 
 bot.run(TOKEN)
+
+import os
+from discord.ext import commands
+import discord
+
+bot = commands.Bot(command_prefix="!")
+
+@bot.event
+async def on_ready():
+    print(f'Bot conectado como {bot.user}')
+
+# Agregar este bloque si Render lo requiere
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))  # Render suele usar PORT env var
+    import threading
+    import http.server
+    import socketserver
+
+    def keep_alive():
+        handler = http.server.SimpleHTTPRequestHandler
+        with socketserver.TCPServer(("", port), handler) as httpd:
+            print(f"Sirviendo en el puerto {port}")
+            httpd.serve_forever()
+
+    t = threading.Thread(target=keep_alive)
+    t.start()
+
+    bot.run(os.getenv("DISCORD_TOKEN"))
